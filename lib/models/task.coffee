@@ -12,7 +12,7 @@ Task = new Schema
   time:
     type: Date
     required: yes
-  options:
+  opts:
     type: Schema.Types.Mixed
     default: {}
   updated_at:
