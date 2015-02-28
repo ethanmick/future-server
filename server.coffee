@@ -4,15 +4,9 @@
 # 2015
 #
 Q = require 'q'
-net = require 'net'
 mongoose = require('mongoose-q')()
 log = require './lib/helpers/log'
-
-server = net.createServer (c)->
-  log.warn 'Client connected'
-
-  c.on 'end', ->
-    log.warn 'client disconnected'
+Server = require './lib/models/server'
 
 ConnectMongo = ->
   deferred = Q.defer()
@@ -27,11 +21,10 @@ ConnectMongo = ->
 
   deferred.promise
 
-listen = Q.nbind(server.listen, server)
-
+server = new Server()
 ConnectMongo().then ->
-  listen(8124)
+  server._listen(8124)
 .then ->
   log.warn 'Future has started.'
-.fail(console.log)
+.fail(log.error)
 .done()
