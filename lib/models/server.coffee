@@ -25,7 +25,12 @@ class Server extends TCPServer
       log.info 'DATA', data
       if data?.command is 'create'
         @createTask(data?.attributes, c)
-
+      else if data?.command is 'get'
+        @getTask(data?.name, c)
+      else if data?.command is 'delete'
+        @deleteTask(data?.name, c)
+      else
+        log.error 'Invalid command received!'
     c.pipe(stream)
 
   ###
@@ -41,18 +46,18 @@ class Server extends TCPServer
     .done()
 
   deleteTask: (opts, c)->
-    Task.removeQ(opts).then ->
-      c.write('200')
-    .fail (err)->
-      c.write('400')
+    Task.removeQ(opts).then =>
+      c.write(@compress(code: 200))
+    .fail (err)=>
+      c.write(@compress(error: err?.message))
     .done()
 
   getTask: (name, c)->
-    Task.findOneQ(name: name).then (task)->
-      return c.write('404') unless task
-      c.write(task.toObject())
-    .fail (err)->
-      c.write('400')
+    Task.findOneQ(name: name).then (task)=>
+      return c.write(@compress(error: 'Not Found!')) unless task
+      c.write(@compress(task: task.toObject()))
+    .fail (err)=>
+      c.write(@compress(error: err?.message))
     .done()
 
   compress: (obj)->

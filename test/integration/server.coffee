@@ -2,6 +2,7 @@
 #
 #
 #
+#
 should = require('chai').should()
 net = require 'net'
 Server = require '../../lib/models/server'
@@ -42,11 +43,12 @@ describe 'Server', ->
     client.on 'close', ->
       done()
 
+  taskName = "test-#{uuid.v4()}"
   it 'should make a new task', (done)->
     date = new Date()
     date.setMinutes(date.getMinutes() + 30)
     task =
-      name: "test-#{uuid.v4()}"
+      name: taskName
       time: date
       opts:
         some: 'data'
@@ -69,6 +71,46 @@ describe 'Server', ->
         should.exist t
         t.updated_at.should.be.ok
         t.created_at.should.be.ok
+        done()
+
+  it 'should fetch the task', (done)->
+    client = net.createConnection port: 4567, (c)->
+      packet =
+        command: 'get'
+        name: taskName
+      client.write(JSON.stringify(packet))
+
+    client.setEncoding('utf8')
+    client.on 'data', (data)->
+      data = JSON.parse(data)
+      should.not.exist data.error
+      t = data.task
+      should.exist t
+      t.updated_at.should.be.ok
+      t.created_at.should.be.ok
+      t.name.should.equal taskName
+      client.end()
+
+    client.on 'close', ->
+      done()
+
+  it 'should delete the task', (done)->
+    client = net.createConnection port: 4567, (c)->
+      packet =
+        command: 'delete'
+        name: taskName
+      client.write(JSON.stringify(packet))
+
+    client.setEncoding('utf8')
+    client.on 'data', (data)->
+      data = JSON.parse(data)
+      should.not.exist data.error
+      data.code.should.equal 200
+      client.end()
+
+    client.on 'close', ->
+      Task.findOneQ(name: taskName).then (t)->
+        should.not.exist t
         done()
 
   afterEach (done)->
