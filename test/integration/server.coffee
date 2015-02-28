@@ -21,6 +21,22 @@ describe 'Server', ->
     client.on 'close', ->
       done()
 
+  it 'should send json data', (done)->
+    client = net.createConnection port: 4567, (c)->
+
+      data =
+        some:
+          ok: 'data'
+        cool: 'man'
+        awesome:
+          sauce:
+            yep: 'woot'
+
+      client.end(JSON.stringify(data))
+
+    client.on 'close', ->
+      done()
+
   afterEach (done)->
     server._close().then ->
       done()

@@ -5,6 +5,7 @@
 #
 Q = require 'Q'
 TCPServer = require('net').Server
+jsonstream = require 'json-stream'
 log = require '../helpers/log'
 
 class Server extends TCPServer
@@ -17,6 +18,11 @@ class Server extends TCPServer
 
     c.on 'end', ->
       log.warn 'client disconnected'
+
+    stream = jsonstream()
+    stream.on 'data', (data)->
+      log.info 'DATA', data
+    c.pipe(stream)
 
   _listen: (port)->
     listen = Q.nbind(@listen, this)
