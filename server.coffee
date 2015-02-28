@@ -2,13 +2,10 @@
 # Ethan Mick
 # 2015
 #
-
-log = require './lib/helpers/log'
-mongoose = require('mongoose-q')()
+Q = require 'q'
 net = require 'net'
-
-log.debug 'woot'
-
+mongoose = require('mongoose-q')()
+log = require './lib/helpers/log'
 
 server = net.createServer (c)->
   log.warn 'Client connected'
@@ -16,5 +13,24 @@ server = net.createServer (c)->
   c.on 'end', ->
     log.warn 'client disconnected'
 
-server.listen 8124, ->
-  log.warn 'server bound'
+ConnectMongo = ->
+  deferred = Q.defer()
+  mongoose.connect('mongodb://localhost/future_development')
+  db = mongoose.connection
+
+  db.on 'error', (err)->
+    deferred.reject(err)
+
+  db.once 'open', ->
+    deferred.resolve(db)
+
+  deferred.promise
+
+listen = Q.nbind(server.listen, server)
+
+ConnectMongo().then ->
+  listen(8124)
+.then ->
+  log.warn 'Future has started.'
+.fail(console.log)
+.done()
