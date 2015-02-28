@@ -22,3 +22,11 @@ lint:
 
 check-dependencies:
 	./node_modules/david/bin/david.js
+
+all:
+	$(MAKE) unit
+	$(MAKE) cov
+	$(MAKE) lint
+	$(MAKE) check-dependencies
+
+.PHONY: all test clean unit integration
