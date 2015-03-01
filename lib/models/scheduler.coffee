@@ -4,14 +4,16 @@
 # 2015
 #
 #
+EventEmitter = require('events').EventEmitter
 PriorityQueue = require 'priorityqueuejs'
 _100_MILLISECONDS = 100
 _3_MINUTES = 180000
 log = require '../helpers/log'
 
-class Scheduler
+class Scheduler extends EventEmitter
 
   constructor: ->
+    super()
     @queue = new PriorityQueue (a, b)->
       b.time - a.time
 
@@ -22,7 +24,7 @@ class Scheduler
     log.info 'ticking...'
     unless @queue.isEmpty()
       task = @queue.peek
-      return unless task.hasOccured()
+      return unless task.hasOccured(50)
       # Task has occured and has to be fired off
 
   readDB: ->

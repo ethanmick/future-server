@@ -4,21 +4,37 @@
 # 2015
 #
 Q = require 'Q'
+uuid = require 'uuid'
 TCPServer = require('net').Server
 jsonstream = require 'json-stream'
 log = require '../helpers/log'
 Task = require './task'
+Scheduler = require './scheduler'
 
 class Server extends TCPServer
 
   constructor: ->
     super(@_connection)
+    @scheduler = new Scheduler()
+    @pool = {}
+
+    @scheduler.on 'task', @_send
+
+  _send: (t)->
+    # TODO: move this to a class
+    key = Object.keys(@pool)[0]
+    if key
+      c = @pool[key]
+      c.write(@compress(execute: t.toObject()))
 
   _connection: (c)->
-    log.warn 'Client connected'
+    c.id = uuid.v4()
+    @pool[c.id] = c
+    log.warn 'Client connected', c.id
 
-    c.on 'end', ->
-      log.warn 'client disconnected'
+    c.on 'end', =>
+      delete @pool[c.id]
+      log.warn 'client disconnected', c.id
 
     stream = jsonstream()
     stream.on 'data', (data)=>
