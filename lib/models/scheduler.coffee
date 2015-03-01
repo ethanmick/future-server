@@ -9,6 +9,7 @@ PriorityQueue = require 'priorityqueuejs'
 _100_MILLISECONDS = 100
 _3_MINUTES = 180000
 log = require '../helpers/log'
+Task = require './task'
 
 class Scheduler extends EventEmitter
 
@@ -17,15 +18,16 @@ class Scheduler extends EventEmitter
     @queue = new PriorityQueue (a, b)->
       b.time - a.time
 
+  start: ->
     @timer = setInterval(@tick.bind(this), _100_MILLISECONDS)
     @dbTimer = setInterval(@readDB.bind(this), _3_MINUTES)
 
   tick: ->
     log.info 'ticking...'
     unless @queue.isEmpty()
-      task = @queue.peek
-      return unless task.hasOccured(50)
-      # Task has occured and has to be fired off
+      while not @queue.isEmpty() and @queue.peek().hasOccured(50)
+        task = @queue.deq()
+        @emit 'task', task
 
   readDB: ->
     log.info 'reading db...'

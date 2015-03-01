@@ -113,6 +113,32 @@ describe 'Server', ->
         should.not.exist t
         done()
 
+  it 'should fire off a task when it has occured', (done)->
+    # insert a task
+    date = new Date()
+    date.setSeconds(date.getSeconds() - 1) #just occured
+    opts =
+      name: uuid.v4()
+      time: date
+
+    client = net.createConnection port: 4567, (c)->
+      this
+
+    client.setEncoding('utf8')
+    client.on 'data', (t)->
+      t = JSON.parse(t).execute
+      t.time = new Date(t.time)
+      t.name.should.equal opts.name
+      t.time.getTime().should.equal opts.time.getTime()
+      client.end()
+
+    client.on 'close', ->
+      done()
+
+    t = new Task(opts)
+    server.scheduler.queue.enq(t)
+    server.start()
+
   afterEach (done)->
     server._close().then ->
       done()

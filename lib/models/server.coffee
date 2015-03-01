@@ -18,14 +18,19 @@ class Server extends TCPServer
     @scheduler = new Scheduler()
     @pool = {}
 
-    @scheduler.on 'task', @_send
+    @scheduler.on 'task', @_send.bind(this)
+
+  start: ->
+    @scheduler.start()
 
   _send: (t)->
+    console.log this
     # TODO: move this to a class
     key = Object.keys(@pool)[0]
     if key
       c = @pool[key]
       c.write(@compress(execute: t.toObject()))
+      t.removeQ()
 
   _connection: (c)->
     c.id = uuid.v4()
