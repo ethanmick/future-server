@@ -23,4 +23,20 @@ Task = new Schema
     type: Date
     default: Date.now
 
+Task.methods =
+
+  hasOccured: (lag = 0)->
+    d = new Date()
+    d.setMilliseconds(d.getMilliseconds() - lag)
+    @time < d
+
+Task.statics =
+
+  soon: (future = 3)->
+    date = new Date()
+    date.setMinutes(date.getMinutes() + future)
+    @findQ
+      time:
+        $lte: date
+
 module.exports = mongoose.model 'Task', Task
