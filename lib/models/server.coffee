@@ -24,7 +24,6 @@ class Server extends TCPServer
     @scheduler.start()
 
   _send: (t)->
-    console.log this
     # TODO: move this to a class
     key = Object.keys(@pool)[0]
     if key
@@ -59,7 +58,6 @@ class Server extends TCPServer
   ###
   createTask: (opts, c)->
     task = new Task(opts)
-    console.log 'made', task
     task.saveQ().then =>
       c.write(@compress(code: 200))
     .fail (err)=>
