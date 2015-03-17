@@ -39,6 +39,8 @@
   },
   "dependencies": {
     "coffee-script": "1.9.1",
+    "hapi": "8.3.1",
+    "hapi-router-coffee": "1.1.0",
     "json-stream": "1.0.0",
     "mongoose-q": "0.0.15",
     "priorityqueuejs": "1.0.0",
