@@ -2,16 +2,17 @@
 # Ethan Mick
 # 2015
 #
+Task = require '../models/task'
 
 create = (req, reply)->
   task = new Task(req.payload)
   task.saveQ().then ->
-    reply({name: task.name})
+    reply(name: task.name)
   .done()
 
 get = (req, reply)->
   Task.findOneQ(name: req.params.id).then (task)->
-    reply(error: 'Not Found!') unless task
+    return reply(error: 'Not Found!') unless task
     reply(task: task.toObject())
   .done()
 

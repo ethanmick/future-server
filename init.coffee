@@ -6,12 +6,12 @@
 Q = require 'q'
 mongoose = require('mongoose-q')()
 log = require './lib/helpers/log'
-Server = require './lib/models/server'
+Server = require './lib/server'
 mongo = require './lib/helpers/mongo'
 
-server = new Server()
+server = new Server(port: 8124)
 mongo().then ->
-  server._listen(8124)
+  server.start()
 .then ->
   log.warn 'Future has started.'
 .fail(log.error)
