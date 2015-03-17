@@ -6,6 +6,7 @@ Hapi = require 'Hapi'
 Q = require 'q'
 SocketIO = require 'socket.io'
 log = require './helpers/log'
+Scheduler = require './models/scheduler'
 
 class Server
 
@@ -17,15 +18,13 @@ class Server
     @pool = {}
     @io = SocketIO.listen(server.listener)
     @io.sockets.on 'connection', (socket)=>
+
       @pool[socket.id] = socket
       log.warn 'Client connected', socket.id
 
       socket.on 'disconnect', =>
         delete @pool[socket.id]
         log.warn 'client disconnected', socket.id
-
-    socket.emit({ msg: 'welcome' });
-});
 
   _send: (t)->
     key = Object.keys(@pool)[0]
