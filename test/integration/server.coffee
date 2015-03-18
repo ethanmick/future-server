@@ -5,11 +5,12 @@
 #
 should = require('chai').should()
 net = require 'net'
-Server = require '../../lib/models/server'
+Server = require '../../lib/server'
 mongo = require '../../lib/helpers/mongo'
 mongoose = require('mongoose-q')()
 Task = require '../../lib/models/task'
 uuid = require 'uuid'
+SocketIO = require('socket.io-client')
 
 describe 'Server', ->
 
@@ -18,30 +19,21 @@ describe 'Server', ->
 
   server = null
   beforeEach (done)->
-    server = new Server()
-    server._listen(4567).then ->
+    server = new Server(port: 4567)
+    server.start().then ->
+      server.routes()
+    .then ->
       done()
+    .done()
 
   it 'should accept a TCP connection', (done)->
-    client = net.createConnection port: 4567, (c)->
-      client.end()
+    client = SocketIO('http://localhost:4567', multiplex: no)
+    client.on 'connect', ->
+      client.disconnect()
 
-    client.on 'close', ->
+    client.on 'disconnect', ->
       done()
-
-  it 'should send json data', (done)->
-    client = net.createConnection port: 4567, (c)->
-      data =
-        some:
-          ok: 'data'
-        cool: 'man'
-        awesome:
-          sauce:
-            yep: 'woot'
-
-      client.end(JSON.stringify(data))
-    client.on 'close', ->
-      done()
+      client = null
 
   taskName = "test-#{uuid.v4()}"
   it 'should make a new task', (done)->
@@ -53,20 +45,15 @@ describe 'Server', ->
       opts:
         some: 'data'
 
-    client = net.createConnection port: 4567, (c)->
-      msg =
-        command: 'create'
-        attributes: task
-      client.write(JSON.stringify(msg))
+    req =
+      method: 'POST'
+      url: '/v1/task'
+      payload: JSON.stringify(task)
 
-    client.setEncoding('utf8')
-    client.on 'data', (data)->
-      data = JSON.parse(data)
-      should.not.exist data.error
-      data.code.should.equal 200
-      client.end()
+    server.server.inject req, (res)->
+      should.not.exist res.result.error
+      res.statusCode.should.equal 200
 
-    client.on 'close', ->
       Task.findOneQ(name: task.name).then (t)->
         should.exist t
         t.updated_at.should.be.ok
@@ -74,41 +61,28 @@ describe 'Server', ->
         done()
 
   it 'should fetch the task', (done)->
-    client = net.createConnection port: 4567, (c)->
-      packet =
-        command: 'get'
-        name: taskName
-      client.write(JSON.stringify(packet))
+    req =
+      method: 'GET'
+      url: "/v1/task/#{taskName}"
 
-    client.setEncoding('utf8')
-    client.on 'data', (data)->
-      data = JSON.parse(data)
-      should.not.exist data.error
-      t = data.task
+    server.server.inject req, (res)->
+      should.not.exist res.result.error
+      t = res.result
       should.exist t
       t.updated_at.should.be.ok
       t.created_at.should.be.ok
       t.name.should.equal taskName
-      client.end()
-
-    client.on 'close', ->
       done()
 
   it 'should delete the task', (done)->
-    client = net.createConnection port: 4567, (c)->
-      packet =
-        command: 'delete'
-        name: taskName
-      client.write(JSON.stringify(packet))
+    req =
+      method: 'DELETE'
+      url: "/v1/task/#{taskName}"
 
-    client.setEncoding('utf8')
-    client.on 'data', (data)->
-      data = JSON.parse(data)
-      should.not.exist data.error
-      data.code.should.equal 200
-      client.end()
+    server.server.inject req, (res)->
+      should.not.exist res.result.error
+      res.statusCode.should.equal 200
 
-    client.on 'close', ->
       Task.findOneQ(name: taskName).then (t)->
         should.not.exist t
         done()
@@ -117,30 +91,31 @@ describe 'Server', ->
     # insert a task
     date = new Date()
     date.setSeconds(date.getSeconds() - 1) #just occured
+    task =
+      name: uuid.v4()
+      time: date
+
     opts =
       name: uuid.v4()
       time: date
 
-    client = net.createConnection port: 4567, (c)->
-      this
+    client = SocketIO('http://localhost:4567', multiplex: no)
 
-    client.setEncoding('utf8')
-    client.on 'data', (t)->
-      t = JSON.parse(t).execute
+    client.on 'task', (t)->
       t.time = new Date(t.time)
       t.name.should.equal opts.name
       t.time.getTime().should.equal opts.time.getTime()
-      client.end()
+      client.disconnect()
 
-    client.on 'close', ->
+    client.on 'disconnect', ->
       done()
 
-    t = new Task(opts)
-    server.scheduler.queue.enq(t)
-    server.start()
+    client.on 'connect', ->
+      t = new Task(opts)
+      server.scheduler.queue.enq(t)
 
   afterEach (done)->
-    server._close().then ->
+    server.stop().then ->
       done()
 
   after (done)->

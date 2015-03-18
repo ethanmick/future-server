@@ -59,6 +59,7 @@
     "mocha": "2.1.0",
     "mocha-lcov-reporter": "0.0.2",
     "sinon": "1.12.2",
+    "socket.io-client": "1.3.2",
     "travis-cov": "0.2.5"
   }
 }

@@ -13,11 +13,11 @@ create = (req, reply)->
 get = (req, reply)->
   Task.findOneQ(name: req.params.id).then (task)->
     return reply(error: 'Not Found!') unless task
-    reply(task: task.toObject())
+    reply(task.toObject())
   .done()
 
 del = (req, reply)->
-  name = req.param.id
+  name = req.params.id
   Task.removeQ(name: name).then ->
     reply(deleted: name)
   .done()
@@ -25,17 +25,17 @@ del = (req, reply)->
 module.exports = [
   {
     method: 'POST'
-    url: '/v1/task'
+    path: '/v1/task'
     handler: create
   }
   {
     method: 'GET'
-    url: '/v1/task/{id}'
+    path: '/v1/task/{id}'
     handler: get
   }
   {
     method: 'DELETE'
-    url: '/v1/task/{id}'
+    path: '/v1/task/{id}'
     handler: del
   }
 ]
