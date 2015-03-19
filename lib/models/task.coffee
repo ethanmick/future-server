@@ -30,6 +30,11 @@ Task.methods =
     d.setMilliseconds(d.getMilliseconds() - lag)
     @time < d
 
+  soon: (future = 3)->
+    d = new Date()
+    d.setMinutes(d.getMinutes() + future)
+    @time < d
+
 Task.statics =
 
   soon: (future = 3)->

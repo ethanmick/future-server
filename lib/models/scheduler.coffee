@@ -23,9 +23,9 @@ class Scheduler extends EventEmitter
     @dbTimer = setInterval(@readDB.bind(this), _3_MINUTES)
 
   tick: ->
-    log.info 'ticking...'
+#    log.info 'ticking...'
     unless @queue.isEmpty()
-      while not @queue.isEmpty() and @queue.peek().hasOccured(50)
+      while not @queue.isEmpty() and @queue.peek().hasOccured(30)
         task = @queue.deq()
         @emit 'task', task
 

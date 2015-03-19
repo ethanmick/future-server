@@ -13,6 +13,8 @@ server = new Server(port: 8124)
 mongo().then ->
   server.start()
 .then ->
+  server.routes()
+.then ->
   log.warn 'Future has started.'
 .fail(log.error)
 .done()

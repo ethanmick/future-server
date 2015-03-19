@@ -7,6 +7,8 @@ Task = require '../models/task'
 create = (req, reply)->
   task = new Task(req.payload)
   task.saveQ().then ->
+    console.log req.server.app.scheduler.queue.enq
+    req.server.app.scheduler.queue.enq(task) if task.soon()
     reply(name: task.name)
   .done()
 

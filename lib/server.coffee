@@ -14,6 +14,7 @@ class Server
     @server = new Hapi.Server()
     @server.connection(opts)
     @scheduler = new Scheduler()
+    @server.app.scheduler = @scheduler
     @scheduler.on 'task', @_send.bind(this)
     @pool = {}
     @io = SocketIO.listen(@server.listener)
@@ -27,6 +28,7 @@ class Server
         log.warn 'client disconnected', socket.id
 
   _send: (t)->
+    log.debug 'Sending', t
     key = Object.keys(@pool)[0]
     if key
       socket = @pool[key]
